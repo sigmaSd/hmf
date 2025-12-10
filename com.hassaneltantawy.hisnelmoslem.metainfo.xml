@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.hassaneltantawy.hisnelmoslem</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Hisn Elmoslem</name>
+  <name xml:lang="ar">حصن المسلم</name>
+  <summary>Complete collection of Islamic supplications and remembrances</summary>
+  <summary xml:lang="ar">التطبيق يحتوي على كتاب حصن المسلم كاملا مع ميزات إضافية</summary>
+  
+  <description>
+    <p>
+      Hisn Elmoslem (Fortress of the Muslim) is a comprehensive Islamic application containing a complete collection of authentic supplications (Adhkar) and remembrances from the Quran and Sunnah. The app includes all chapters from the renowned book "Hisn al-Muslim" with additional features.
+    </p>
+    <p xml:lang="ar">
+      تطبيق حصن المسلم هو تطبيق إسلامي شامل يحتوي على مجموعة كاملة من الأدعية والأذكار الصحيحة من القرآن والسنة. يتضمن التطبيق جميع أبواب كتاب "حصن المسلم" الشهير مع ميزات إضافية.
+    </p>
+    
+    <p>Features:</p>
+    <ul>
+      <li>Complete Hisn al-Muslim book with search functionality</li>
+      <li>Digital Tasbih (counter) with customizable options</li>
+      <li>Audio playback for supplications</li>
+      <li>Reminders and notifications for daily Adhkar</li>
+      <li>Favorites and bookmarking system</li>
+      <li>Filter by source and frequency (daily, weekly, monthly, yearly)</li>
+      <li>Dark mode support</li>
+      <li>Multiple font options</li>
+      <li>Share and copy functionality</li>
+      <li>Offline functionality</li>
+    </ul>
+    
+    <p xml:lang="ar">المميزات:</p>
+    <ul xml:lang="ar">
+      <li>كتاب حصن المسلم كاملا مع خاصية البحث</li>
+      <li>سبحة رقمية مع خيارات قابلة للتخصيص</li>
+      <li>تشغيل صوتي للأدعية</li>
+      <li>تذكيرات وإشعارات للأذكار اليومية</li>
+      <li>نظام المفضلة والعلامات المرجعية</li>
+      <li>التصفية حسب المصدر والتكرار (يومي - أسبوعي - شهري - سنوي)</li>
+      <li>دعم الوضع الليلي</li>
+      <li>خيارات خطوط متعددة</li>
+      <li>إمكانية المشاركة والنسخ</li>
+      <li>يعمل بدون إنترنت</li>
+    </ul>
+  </description>
+  
+  <launchable type="desktop-id">com.hassaneltantawy.hisnelmoslem.desktop</launchable>
+  
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/muslimpack/HisnElmoslem_App/master/repo_media/screenshots/screenshot1.png</image>
+      <caption>Main interface showing Adhkar categories</caption>
+      <caption xml:lang="ar">الواجهة الرئيسية تعرض فئات الأذكار</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/muslimpack/HisnElmoslem_App/master/repo_media/screenshots/screenshot2.png</image>
+      <caption>Dhikr display with counter</caption>
+      <caption xml:lang="ar">عرض الذكر مع العداد</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/muslimpack/HisnElmoslem_App/master/repo_media/screenshots/screenshot3.png</image>
+      <caption>Digital Tasbih (counter)</caption>
+      <caption xml:lang="ar">السبحة الرقمية</caption>
+    </screenshot>
+  </screenshots>
+  
+  <url type="homepage">https://github.com/muslimpack/HisnElmoslem_App</url>
+  <url type="bugtracker">https://github.com/muslimpack/HisnElmoslem_App/issues</url>
+  <url type="help">https://github.com/muslimpack/HisnElmoslem_App/blob/main/README.md</url>
+  
+  <developer id="com.hassaneltantawy">
+    <name>Hassan Eltantawy &amp; Contributors</name>
+  </developer>
+  
+  <content_rating type="oars-1.1" />
+  
+  <releases>
+    <release version="3.0.01" date="2025-01-01">
+      <description>
+        <p>Latest stable release with improved features and bug fixes.</p>
+        <p xml:lang="ar">أحدث إصدار مستقر مع ميزات محسنة وإصلاحات للأخطاء.</p>
+      </description>
+    </release>
+  </releases>
+  
+  <categories>
+    <category>Utility</category>
+    <category>Education</category>
+  </categories>
+  
+  <keywords>
+    <keyword>Islam</keyword>
+    <keyword>Muslim</keyword>
+    <keyword>Quran</keyword>
+    <keyword>Adhkar</keyword>
+    <keyword>Dua</keyword>
+    <keyword>Prayer</keyword>
+    <keyword>Tasbih</keyword>
+    <keyword xml:lang="ar">إسلام</keyword>
+    <keyword xml:lang="ar">مسلم</keyword>
+    <keyword xml:lang="ar">قرآن</keyword>
+    <keyword xml:lang="ar">أذكار</keyword>
+    <keyword xml:lang="ar">دعاء</keyword>
+    <keyword xml:lang="ar">صلاة</keyword>
+    <keyword xml:lang="ar">سبحة</keyword>
+  </keywords>
+  
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </recommends>
+  
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+  
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </supports>
+</component>

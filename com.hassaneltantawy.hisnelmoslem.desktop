@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Hisn Elmoslem
+Name[ar]=حصن المسلم
+GenericName=Islamic Supplications
+GenericName[ar]=أذكار إسلامية
+Comment=Complete collection of Islamic supplications and remembrances
+Comment[ar]=مجموعة كاملة من الأدعية والأذكار الإسلامية
+Exec=hisnelmoslem
+Icon=com.hassaneltantawy.hisnelmoslem
+Terminal=false
+Categories=Utility;Education;
+Keywords=Islam;Muslim;Quran;Adhkar;Dua;Prayer;Tasbih;إسلام;مسلم;قرآن;أذكار;دعاء;صلاة;سبحة;
+StartupWMClass=hisnelmoslem
+StartupNotify=true

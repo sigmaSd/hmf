@@ -1,0 +1,73 @@
+app-id: com.hassaneltantawy.hisnelmoslem
+runtime: org.freedesktop.Platform
+runtime-version: "23.08"
+sdk: org.freedesktop.Sdk
+command: hisnelmoslem
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --socket=pulseaudio
+  - --share=network
+  - --filesystem=xdg-documents
+  - --filesystem=xdg-download
+
+modules:
+  - name: flutter-linux
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/flutter
+      - cp -r . /app/flutter
+    sources:
+      - type: archive
+        url: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.27.1-stable.tar.xz
+        sha256: 11e01dcf51cb6f86e3e9a45db0c91f89cd0e9d91a5e52f4d4e27a9e68bc8e2b7
+        dest: flutter
+        only-arches:
+          - x86_64
+
+  - name: hisnelmoslem
+    buildsystem: simple
+    build-commands:
+      # Set Flutter environment
+      - export PATH="/app/flutter/bin:$PATH"
+      - export PUB_CACHE="$PWD/.pub-cache"
+
+      # Navigate to Flutter project directory
+      - cd hisnelmoslem
+
+      # Configure Flutter
+      - flutter config --enable-linux-desktop
+      - flutter config --no-analytics
+
+      # Get dependencies
+      - flutter pub get
+
+      # Build Linux release
+      - flutter build linux --release
+
+      # Install the application
+      - mkdir -p /app/bin
+      - cp -r hisnelmoslem/build/linux/x64/release/bundle/* /app/bin/
+
+      # Install desktop file
+      - install -Dm644 com.hassaneltantawy.hisnelmoslem.desktop /app/share/applications/com.hassaneltantawy.hisnelmoslem.desktop
+
+      # Install AppData file
+      - install -Dm644 com.hassaneltantawy.hisnelmoslem.metainfo.xml /app/share/metainfo/com.hassaneltantawy.hisnelmoslem.metainfo.xml
+
+      # Install icons (you'll need to provide appropriate icons)
+      - install -Dm644 hisnelmoslem/assets/images/app_icon.png /app/share/icons/hicolor/512x512/apps/com.hassaneltantawy.hisnelmoslem.png
+
+    sources:
+      - type: git
+        url: https://github.com/muslimpack/HisnElmoslem_App.git
+        tag: v3.0.01
+
+      - type: file
+        path: com.hassaneltantawy.hisnelmoslem.desktop
+
+      - type: file
+        path: com.hassaneltantawy.hisnelmoslem.metainfo.xml

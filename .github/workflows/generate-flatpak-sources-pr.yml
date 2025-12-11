@@ -1,0 +1,142 @@
+name: Generate Flatpak Sources (PR)
+
+on:
+  workflow_dispatch: # Manual trigger
+  schedule:
+    # Run weekly on Monday at 00:00 UTC
+    - cron: "0 0 * * 1"
+  push:
+    paths:
+      - "pubspec.yaml"
+      - "pubspec.lock"
+
+jobs:
+  generate-sources:
+    name: Generate Flutter Dependencies for Flatpak
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Clone flatpak-builder-tools
+        run: |
+          git clone https://github.com/flatpak/flatpak-builder-tools.git
+
+      - name: Generate dependency sources
+        run: |
+          cd flatpak-builder-tools/dart
+          echo "Generating sources from pubspec.yaml..."
+          python3 flatpak-dart-generator.py ../../pubspec.yaml || {
+            echo "Error: Failed to generate sources"
+            exit 1
+          }
+
+          if [ -f "generated-sources.json" ]; then
+            mv generated-sources.json ../../
+            echo "✓ Successfully generated generated-sources.json"
+          else
+            echo "Error: generated-sources.json was not created"
+            exit 1
+          fi
+
+      - name: Update manifest
+        run: |
+          # Check if manifest needs updating
+          if [ -f "com.hassaneltantawy.hisnelmoslem.yml" ]; then
+            if grep -q "# - generated-sources.json" com.hassaneltantawy.hisnelmoslem.yml; then
+              sed -i 's/# - generated-sources.json/- generated-sources.json/' com.hassaneltantawy.hisnelmoslem.yml
+              echo "✓ Uncommented generated-sources.json in manifest"
+            elif ! grep -q "generated-sources.json" com.hassaneltantawy.hisnelmoslem.yml; then
+              echo "⚠ Warning: generated-sources.json not found in manifest"
+            else
+              echo "✓ Manifest already includes generated-sources.json"
+            fi
+          fi
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet generated-sources.json 2>/dev/null && \
+             git diff --quiet com.hassaneltantawy.hisnelmoslem.yml 2>/dev/null; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes detected"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in sources"
+          fi
+
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            chore: Update Flatpak dependency sources
+
+            Auto-generated Flutter/Dart dependencies for Flatpak build.
+          committer: GitHub Actions <github-actions[bot]@users.noreply.github.com>
+          author: GitHub Actions <github-actions[bot]@users.noreply.github.com>
+          branch: update-flatpak-sources-${{ github.run_number }}
+          delete-branch: true
+          title: "chore: Update Flatpak dependency sources"
+          body: |
+            ## 🤖 Automated Flatpak Sources Update
+
+            This PR updates the Flatpak build dependencies.
+
+            ### Changes
+            - ✅ Regenerated `generated-sources.json` from current `pubspec.yaml`
+            - ✅ Updated manifest to reference generated sources
+
+            ### Details
+            - **Triggered by:** `${{ github.event_name }}`
+            - **Workflow run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            ### How to test
+            ```bash
+            # Test the Flatpak build
+            flatpak-builder --force-clean build-dir com.hassaneltantawy.hisnelmoslem.yml
+            ```
+
+            ### Notes
+            This PR was automatically created by the `generate-flatpak-sources` workflow.
+            If the dependencies in `pubspec.yaml` haven't changed, this PR can be closed.
+          labels: |
+            dependencies
+            flatpak
+            automated
+
+      - name: Upload generated sources
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-flatpak-sources
+          path: |
+            generated-sources.json
+            com.hassaneltantawy.hisnelmoslem.yml
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Job Summary
+        if: always()
+        run: |
+          echo "## Flatpak Sources Generation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "generated-sources.json" ]; then
+            LINES=$(wc -l < generated-sources.json)
+            SIZE=$(du -h generated-sources.json | cut -f1)
+            echo "✅ **Success!** Generated sources file created" >> $GITHUB_STEP_SUMMARY
+            echo "- Lines: $LINES" >> $GITHUB_STEP_SUMMARY
+            echo "- Size: $SIZE" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Failed** to generate sources" >> $GITHUB_STEP_SUMMARY
+          fi

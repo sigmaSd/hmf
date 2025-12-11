@@ -39,6 +39,22 @@ jobs:
       - name: Run flatpak-flutter preprocessor
         run: |
           cd flatpak-flutter
+
+          # Patch flatpak-flutter.py to fix missing l10n file issue
+          cat <<EOF > patch_script.py
+          import os
+          lines = open('flatpak-flutter.py').readlines()
+          with open('flatpak-flutter.py', 'w') as f:
+              for line in lines:
+                  f.write(line)
+                  if 'full_pubspec_path =' in line:
+                      indent = line[:line.find('full_pubspec_path')]
+                      f.write(indent + "os.system(f'mkdir -p {full_pubspec_path}/lib/generated/lang')\n")
+                      f.write(indent + "if not os.path.exists(f'{full_pubspec_path}/lib/generated/lang/l10n_untranslated.json'):\n")
+                      f.write(indent + "    with open(f'{full_pubspec_path}/lib/generated/lang/l10n_untranslated.json', 'w') as out: out.write('{}')\n")
+          EOF
+          python3 patch_script.py
+
           python3 flatpak-flutter.py ../flatpak-flutter.yml --app-pubspec hisnelmoslem
 
           # Move generated manifest to root

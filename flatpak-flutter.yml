@@ -21,6 +21,7 @@ modules:
     build-commands:
       # Configure and build Flutter app
       - flutter config --enable-linux-desktop --no-analytics
+      - mkdir -p lib/generated/lang && [ -f lib/generated/lang/l10n_untranslated.json ] || echo "{}" > lib/generated/lang/l10n_untranslated.json
       - flutter pub get
       - flutter build linux --release --no-pub
 

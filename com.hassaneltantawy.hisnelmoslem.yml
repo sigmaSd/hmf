@@ -19,7 +19,7 @@ modules:
     buildsystem: simple
     build-commands:
       - mkdir -p /app/flutter
-      - tar -xf flutter_linux_3.27.1-stable.tar.xz
+      - tar -xf flutter_linux_3.27.1-stable.tar.xz --no-same-owner
       - cp -r flutter/* /app/flutter/
     sources:
       - type: file

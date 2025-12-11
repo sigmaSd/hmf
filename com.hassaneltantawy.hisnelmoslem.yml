@@ -18,9 +18,11 @@ modules:
   - name: flutter-linux
     buildsystem: simple
     build-commands:
-      - cp -r flutter /app/flutter
+      - mkdir -p /app/flutter
+      - tar -xf flutter_linux_3.27.1-stable.tar.xz
+      - cp -r flutter/* /app/flutter/
     sources:
-      - type: archive
+      - type: file
         url: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.27.1-stable.tar.xz
         sha256: 61497eb64cd7b3aa99ca9911ccd921c8dab79afd909ca1c9ff9546067ebcf6ca
         only-arches:

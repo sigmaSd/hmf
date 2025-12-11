@@ -18,9 +18,8 @@ modules:
   - name: flutter-linux
     buildsystem: simple
     build-commands:
-      - mkdir -p /app/flutter
       - tar -xf flutter_linux_3.27.1-stable.tar.xz --no-same-owner
-      - cp -r flutter/* /app/flutter/
+      - cp -r flutter /app/flutter
     sources:
       - type: file
         url: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.27.1-stable.tar.xz
@@ -36,9 +35,12 @@ modules:
         set -e
         export PATH="/app/flutter/bin:$PATH"
         export PUB_CACHE="$PWD/.pub-cache"
+
+        # Mark Flutter directory as safe for git operations
+        git config --global --add safe.directory /app/flutter
+
         cd hisnelmoslem
-        flutter config --enable-linux-desktop
-        flutter config --no-analytics
+        flutter config --enable-linux-desktop --no-analytics
         flutter pub get
         flutter build linux --release
 

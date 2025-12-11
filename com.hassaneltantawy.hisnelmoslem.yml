@@ -31,22 +31,15 @@ modules:
   - name: hisnelmoslem
     buildsystem: simple
     build-commands:
-      # Set Flutter environment
-      - export PATH="/app/flutter/bin:$PATH"
-      - export PUB_CACHE="$PWD/.pub-cache"
-
-      # Navigate to Flutter project directory
-      - cd hisnelmoslem
-
-      # Configure Flutter
-      - flutter config --enable-linux-desktop
-      - flutter config --no-analytics
-
-      # Get dependencies
-      - flutter pub get
-
-      # Build Linux release
-      - flutter build linux --release
+      # Configure and build Flutter app
+      - |
+        export PATH="/app/flutter/bin:$PATH"
+        export PUB_CACHE="$PWD/.pub-cache"
+        cd hisnelmoslem
+        flutter config --enable-linux-desktop
+        flutter config --no-analytics
+        flutter pub get
+        flutter build linux --release
 
       # Install the application
       - mkdir -p /app/bin
@@ -58,7 +51,7 @@ modules:
       # Install AppData file
       - install -Dm644 com.hassaneltantawy.hisnelmoslem.metainfo.xml /app/share/metainfo/com.hassaneltantawy.hisnelmoslem.metainfo.xml
 
-      # Install icons (you'll need to provide appropriate icons)
+      # Install icons
       - install -Dm644 hisnelmoslem/assets/images/app_icon.png /app/share/icons/hicolor/512x512/apps/com.hassaneltantawy.hisnelmoslem.png
 
     sources:

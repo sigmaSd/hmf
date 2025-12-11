@@ -29,22 +29,62 @@ jobs:
 
       - name: Clone flatpak-builder-tools
         run: |
-          git clone https://github.com/flatpak/flatpak-builder-tools.git
+          set -ex  # Enable command echoing and exit on error
+
+          if [ -d "flatpak-builder-tools" ]; then
+            echo "Removing existing flatpak-builder-tools directory..."
+            rm -rf flatpak-builder-tools
+          fi
+
+          echo "Cloning flatpak-builder-tools..."
+          git clone --depth=1 https://github.com/flatpak/flatpak-builder-tools.git
+
+          echo "Verifying clone..."
+          ls -la flatpak-builder-tools/
+
+          if [ ! -d "flatpak-builder-tools/dart" ]; then
+            echo "ERROR: dart directory not found in flatpak-builder-tools"
+            echo "Contents of flatpak-builder-tools:"
+            find flatpak-builder-tools -maxdepth 2 -type d
+            exit 1
+          fi
+
+          if [ ! -f "flatpak-builder-tools/dart/flatpak-dart-generator.py" ]; then
+            echo "ERROR: flatpak-dart-generator.py not found"
+            echo "Contents of dart directory:"
+            ls -la flatpak-builder-tools/dart/
+            exit 1
+          fi
+
+          echo "✓ Successfully cloned flatpak-builder-tools"
 
       - name: Generate dependency sources
         run: |
-          cd flatpak-builder-tools/dart
-          echo "Generating sources from pubspec.yaml..."
-          python3 flatpak-dart-generator.py ../../pubspec.yaml || {
-            echo "Error: Failed to generate sources"
+          set -ex  # Enable command echoing and exit on error
+
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+
+          if [ ! -f "pubspec.yaml" ]; then
+            echo "ERROR: pubspec.yaml not found in repository root"
             exit 1
-          }
+          fi
+
+          cd flatpak-builder-tools/dart
+          pwd
+
+          echo "Generating sources from pubspec.yaml..."
+          python3 flatpak-dart-generator.py ../../pubspec.yaml
 
           if [ -f "generated-sources.json" ]; then
+            echo "✓ Generated file size: $(du -h generated-sources.json)"
             mv generated-sources.json ../../
-            echo "✓ Successfully generated generated-sources.json"
+            echo "✓ Successfully moved generated-sources.json to repository root"
           else
-            echo "Error: generated-sources.json was not created"
+            echo "ERROR: generated-sources.json was not created"
+            echo "Contents of current directory:"
+            ls -la
             exit 1
           fi
 

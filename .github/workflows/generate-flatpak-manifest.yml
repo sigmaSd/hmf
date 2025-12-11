@@ -40,7 +40,7 @@ jobs:
         run: |
           cd flatpak-flutter
 
-          # Patch flatpak-flutter.py to fix missing l10n file issue
+          # Patch flatpak-flutter.py to fix missing l10n file issue by modifying l10n.yaml
           cat <<EOF > patch_script.py
           import os
           from pathlib import Path
@@ -54,16 +54,21 @@ jobs:
                   f.write(line)
                   if 'full_pubspec_path =' in line:
                       indent = line[:line.find('full_pubspec_path')]
-                      f.write(indent + "print(f'DEBUG: Ensuring l10n assets in {full_pubspec_path}')\n")
+                      f.write(indent + "print(f'DEBUG: Patching l10n.yaml in {full_pubspec_path}')\n")
                       f.write(indent + "try:\n")
+                      f.write(indent + "    l10n_yaml = Path(full_pubspec_path) / 'l10n.yaml'\n")
+                      f.write(indent + "    if l10n_yaml.exists():\n")
+                      f.write(indent + "        with open(l10n_yaml, 'r') as yf: lines_y = yf.readlines()\n")
+                      f.write(indent + "        with open(l10n_yaml, 'w') as yf:\n")
+                      f.write(indent + "            for ly in lines_y:\n")
+                      f.write(indent + "                if 'untranslated-messages-file' not in ly:\n")
+                      f.write(indent + "                    yf.write(ly)\n")
+                      f.write(indent + "        print('DEBUG: Removed untranslated-messages-file from l10n.yaml')\n")
+                      f.write(indent + "    # Ensure output dir exists anyway\n")
                       f.write(indent + "    l10n_dir = Path(full_pubspec_path) / 'lib' / 'generated' / 'lang'\n")
                       f.write(indent + "    l10n_dir.mkdir(parents=True, exist_ok=True)\n")
-                      f.write(indent + "    l10n_file = l10n_dir / 'l10n_untranslated.json'\n")
-                      f.write(indent + "    if not l10n_file.exists():\n")
-                      f.write(indent + "        print(f'DEBUG: Creating {l10n_file}')\n")
-                      f.write(indent + "        with open(l10n_file, 'w') as l10n_out: l10n_out.write('{}')\n")
                       f.write(indent + "except Exception as e:\n")
-                      f.write(indent + "    print(f'DEBUG: Failed to patch l10n: {e}')\n")
+                      f.write(indent + "    print(f'DEBUG: Failed to patch l10n.yaml: {e}')\n")
           EOF
           python3 patch_script.py
 

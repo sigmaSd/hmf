@@ -1,6 +1,6 @@
 app-id: com.hassaneltantawy.hisnelmoslem
 runtime: org.freedesktop.Platform
-runtime-version: "23.08"
+runtime-version: "24.08"
 sdk: org.freedesktop.Sdk
 command: hisnelmoslem
 
@@ -18,13 +18,11 @@ modules:
   - name: flutter-linux
     buildsystem: simple
     build-commands:
-      - mkdir -p /app/flutter
-      - cp -r . /app/flutter
+      - cp -r flutter /app/flutter
     sources:
       - type: archive
         url: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.27.1-stable.tar.xz
         sha256: 61497eb64cd7b3aa99ca9911ccd921c8dab79afd909ca1c9ff9546067ebcf6ca
-        dest: flutter
         only-arches:
           - x86_64
 
@@ -33,6 +31,7 @@ modules:
     build-commands:
       # Configure and build Flutter app
       - |
+        set -e
         export PATH="/app/flutter/bin:$PATH"
         export PUB_CACHE="$PWD/.pub-cache"
         cd hisnelmoslem

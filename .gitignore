@@ -1,0 +1,15 @@
+# Generated manifest (auto-created by flatpak-flutter CI)
+com.hassaneltantawy.hisnelmoslem.yml
+
+# flatpak-flutter tool (cloned in CI)
+flatpak-flutter/
+
+# Flatpak builder artifacts
+.flatpak-builder/
+build/
+repo/
+*.flatpak
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -51,6 +51,16 @@ jobs:
 
           with open(file_path, 'w') as f:
               for line in lines:
+                  if 'if tag is not None:' in line:
+                      indent = line[:line.find('if')]
+                      f.write(indent + "# PATCH: Fix setup-flutter.sh path\n")
+                      f.write(indent + "for module in manifest.get('modules', []):\n")
+                      f.write(indent + "    if module.get('name') == app_module:\n")
+                      f.write(indent + "        cmds = module.get('build-commands', [])\n")
+                      f.write(indent + "        for i, cmd in enumerate(cmds):\n")
+                      f.write(indent + "            if cmd.strip().startswith('setup-flutter.sh'):\n")
+                      f.write(indent + "                cmds[i] = '/var/lib/flutter/bin/' + cmd.strip()\n")
+                      f.write(indent + "                print(f'DEBUG: Updated command to {cmds[i]}')\n")
                   f.write(line)
                   if 'full_pubspec_path =' in line:
                       indent = line[:line.find('full_pubspec_path')]

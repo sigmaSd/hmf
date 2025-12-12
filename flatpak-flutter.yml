@@ -18,8 +18,6 @@ modules:
   - name: hisnelmoslem
     subdir: hisnelmoslem
     buildsystem: simple
-    build-options:
-      append-path: /var/lib/flutter/bin
     build-commands:
       # Configure and build Flutter app
       - flutter config --enable-linux-desktop --no-analytics

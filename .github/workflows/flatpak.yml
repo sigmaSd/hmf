@@ -5,10 +5,18 @@ on:
     branches:
       - main
       - master
+    paths-ignore:
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - "flatpak-flutter.yml"
   pull_request:
     branches:
       - main
       - master
+    paths-ignore:
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - "flatpak-flutter.yml"
   workflow_dispatch:
 
 jobs:

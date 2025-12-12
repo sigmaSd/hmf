@@ -73,6 +73,9 @@ jobs:
 
           python3 flatpak-flutter.py ../flatpak-flutter.yml --app-pubspec hisnelmoslem
 
+          # Patch setup-flutter.sh path
+          sed -i 's|setup-flutter.sh -C|/var/lib/flutter/bin/setup-flutter.sh -C|g' com.hassaneltantawy.hisnelmoslem.yml
+
           # Move generated manifest and dependencies to root
           if [ -f "com.hassaneltantawy.hisnelmoslem.yml" ]; then
             mv com.hassaneltantawy.hisnelmoslem.yml ..

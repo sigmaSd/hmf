@@ -73,54 +73,6 @@ jobs:
 
           python3 flatpak-flutter.py ../flatpak-flutter.yml --app-pubspec hisnelmoslem
 
-          echo "DEBUG: Listing files in current directory:"
-          ls -la
-
-          # Post-process the generated manifest to fix setup-flutter.sh path
-          cat <<EOF > fix_manifest.py
-          import yaml
-          import os
-          import sys
-          
-          manifest_file = 'com.hassaneltantawy.hisnelmoslem.yml'
-          print(f"DEBUG: Attempting to patch {manifest_file}")
-          
-          if not os.path.exists(manifest_file):
-              print(f"ERROR: {manifest_file} not found!")
-              sys.exit(1)
-
-          with open(manifest_file, 'r') as f:
-              data = yaml.safe_load(f)
-          
-          print(f"DEBUG: Loaded manifest keys: {list(data.keys())}")
-          
-          changed = False
-          if 'modules' in data:
-              print(f"DEBUG: Found {len(data['modules'])} modules")
-              for module in data['modules']:
-                  if isinstance(module, dict):
-                      name = module.get('name', 'unknown')
-                      print(f"DEBUG: Processing module '{name}'")
-                      if 'build-commands' in module:
-                          cmds = module['build-commands']
-                          for i, cmd in enumerate(cmds):
-                              if cmd.strip().startswith('setup-flutter.sh'):
-                                  new_cmd = '/var/lib/flutter/bin/' + cmd.strip()
-                                  cmds[i] = new_cmd
-                                  print(f"DEBUG: Updated command to: {new_cmd}")
-                                  changed = True
-          
-          if changed:
-              with open(manifest_file, 'w') as f:
-                  yaml.dump(data, f, default_flow_style=False, sort_keys=False)
-              print("SUCCESS: Successfully patched manifest.")
-          else:
-              print("WARNING: No setup-flutter.sh command found to patch.")
-              # Depending on requirement, we might want to fail here if we EXPECT it to be there.
-              # For now, let's just warn.
-          EOF
-          python3 fix_manifest.py
-
           # Move generated manifest and dependencies to root
           if [ -f "com.hassaneltantawy.hisnelmoslem.yml" ]; then
             mv com.hassaneltantawy.hisnelmoslem.yml ..

@@ -74,9 +74,14 @@ jobs:
 
           python3 flatpak-flutter.py ../flatpak-flutter.yml --app-pubspec hisnelmoslem
 
-          # Move generated manifest to root
+          # Move generated manifest and dependencies to root
           if [ -f "com.hassaneltantawy.hisnelmoslem.yml" ]; then
             mv com.hassaneltantawy.hisnelmoslem.yml ..
+            mv pubspec-sources.json .. 2>/dev/null || true
+            mv flutter-sdk-*.json .. 2>/dev/null || true
+            mv package_config.json .. 2>/dev/null || true
+            mv flutter-shared.sh.patch .. 2>/dev/null || true
+            mv cargo-sources.json .. 2>/dev/null || true
           fi
 
           if [ -f "../com.hassaneltantawy.hisnelmoslem.yml" ]; then

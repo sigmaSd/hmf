@@ -50,16 +50,6 @@ jobs:
 
           with open(file_path, 'w') as f:
               for line in lines:
-                  if 'if tag is not None:' in line:
-                      indent = line[:line.find('if')]
-                      f.write(indent + "# PATCH: Fix setup-flutter.sh path\n")
-                      f.write(indent + "for module in manifest.get('modules', []):\n")
-                      f.write(indent + "    if module.get('name') == app_module:\n")
-                      f.write(indent + "        cmds = module.get('build-commands', [])\n")
-                      f.write(indent + "        for i, cmd in enumerate(cmds):\n")
-                      f.write(indent + "            if cmd.strip().startswith('setup-flutter.sh'):\n")
-                      f.write(indent + "                cmds[i] = '/var/lib/flutter/bin/' + cmd.strip()\n")
-                      f.write(indent + "                print(f'DEBUG: Updated command to {cmds[i]}')\n")
                   f.write(line)
                   if 'full_pubspec_path =' in line:
                       indent = line[:line.find('full_pubspec_path')]
@@ -82,6 +72,40 @@ jobs:
           python3 patch_script.py
 
           python3 flatpak-flutter.py ../flatpak-flutter.yml --app-pubspec hisnelmoslem
+
+          # Post-process the generated manifest to fix setup-flutter.sh path
+          cat <<EOF > fix_manifest.py
+          import yaml
+          
+          manifest_file = 'com.hassaneltantawy.hisnelmoslem.yml'
+          
+          try:
+              with open(manifest_file, 'r') as f:
+                  data = yaml.safe_load(f)
+              
+              changed = False
+              if 'modules' in data:
+                  for module in data['modules']:
+                      if isinstance(module, dict) and 'build-commands' in module:
+                          cmds = module['build-commands']
+                          for i, cmd in enumerate(cmds):
+                              if cmd.strip().startswith('setup-flutter.sh'):
+                                  cmds[i] = '/var/lib/flutter/bin/' + cmd.strip()
+                                  print(f"Updated command: {cmds[i]}")
+                                  changed = True
+              
+              if changed:
+                  with open(manifest_file, 'w') as f:
+                      yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+                  print("Successfully patched manifest.")
+              else:
+                  print("No setup-flutter.sh command found to patch.")
+                  
+          except Exception as e:
+              print(f"Error patching manifest: {e}")
+              # Don't exit with error, maybe the file doesn't exist or structure is different
+          EOF
+          python3 fix_manifest.py
 
           # Move generated manifest and dependencies to root
           if [ -f "com.hassaneltantawy.hisnelmoslem.yml" ]; then

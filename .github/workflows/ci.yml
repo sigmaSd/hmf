@@ -113,7 +113,7 @@ jobs:
           
           # Read calculated SHA256
           try:
-              with open('flutter_sha256.txt', 'r') as f:
+              with open('../flutter_sha256.txt', 'r') as f:
                   sha256 = f.read().strip()
           except FileNotFoundError:
                # Fallback if file not found (shouldn't happen in CI)

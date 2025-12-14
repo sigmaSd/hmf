@@ -163,9 +163,7 @@
             "dest": "flutter/bin",
             "dest-filename": "setup-flutter.sh",
             "commands": [
-                "mkdir -p /var/lib/flutter/packages/flutter_tools/.dart_tool",
-                "mv flutter/packages/flutter_tools/.dart_tool/package_config.json /var/lib/flutter/packages/flutter_tools/.dart_tool",
-                "flutter pub get --offline $@"
+                "/var/lib/flutter/bin/flutter pub get --offline "
             ]
         },
         {
@@ -173,6 +171,11 @@
             "url": "https://storage.googleapis.com/flutter_infra_release/flutter/d3d45dcf251823c1769909cd43698d126db38deb/engine_stamp.json",
             "sha256": "b3e2e0923b122c86c54ac54844aa3d1f3d532a6b08b0b36e2612134dd1741360",
             "dest": "flutter/bin/cache"
+        },
+        {
+            "type": "file",
+            "path": "package_config.json",
+            "dest": "flutter/packages/flutter_tools/.dart_tool"
         }
     ]
 }

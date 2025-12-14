@@ -1,15 +1,30 @@
-name: Update Flatpak Manifest
+name: CI
 
 on:
-  workflow_dispatch: # Manual trigger
   push:
-    paths:
-      - "pubspec.yaml"
-      - "pubspec.lock"
-      - "flatpak-flutter.yml"
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
 
 jobs:
+  check-deps:
+    runs-on: ubuntu-latest
+    outputs:
+      should_update: ${{ steps.filter.outputs.deps }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            deps:
+              - 'pubspec.yaml'
+              - 'pubspec.lock'
+              - 'flatpak-flutter.yml'
+
   update-manifest:
+    needs: check-deps
+    if: needs.check-deps.outputs.should_update == 'true'
     name: Update Manifest
     runs-on: ubuntu-latest
     permissions:
@@ -144,3 +159,60 @@ jobs:
             git commit -m "chore: Update Flatpak manifest"
             git push origin HEAD:${{ github.ref_name }}
           fi
+
+      - name: Upload manifest artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-manifest-files
+          path: |
+            com.hassaneltantawy.hisnelmoslem.yml
+            pubspec-sources.json
+            flutter-sdk-*.json
+            package_config.json
+            flutter-shared.sh.patch
+
+  build-flatpak:
+    needs: [check-deps, update-manifest]
+    if: |
+      always() && 
+      (needs.update-manifest.result == 'success' || needs.check-deps.outputs.should_update == 'false') &&
+      (needs.update-manifest.result != 'failure' && needs.update-manifest.result != 'cancelled')
+    
+    name: Build Flatpak Package
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:freedesktop-24.08
+      options: --privileged
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download updated manifest
+        if: needs.update-manifest.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: flatpak-manifest-files
+          path: .
+
+      - name: Build Flatpak
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: hisnelmoslem.flatpak
+          manifest-path: com.hassaneltantawy.hisnelmoslem.yml
+          cache-key: flatpak-builder-${{ github.sha }}
+
+      - name: Upload Flatpak artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hisnelmoslem-flatpak
+          path: hisnelmoslem.flatpak
+          retention-days: 30
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: .flatpak-builder/build/**/*.log
+          if-no-files-found: ignore

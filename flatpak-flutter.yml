@@ -53,3 +53,5 @@ modules:
 
       - type: file
         path: com.hassaneltantawy.hisnelmoslem.metainfo.xml
+
+# Trigger fix

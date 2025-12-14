@@ -50,6 +50,12 @@ jobs:
           echo "flatpak-flutter version:"
           python3 flatpak-flutter.py --version
 
+      - name: Get Flutter SHA256
+        run: |
+          echo "Calculating SHA256 for Flutter 3.35.5..."
+          curl -sL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.5-stable.tar.xz | sha256sum | cut -d' ' -f1 > flutter_sha256.txt
+          echo "SHA256: $(cat flutter_sha256.txt)"
+
       - name: Run flatpak-flutter preprocessor
         run: |
           cd flatpak-flutter
@@ -91,7 +97,7 @@ jobs:
           # Patch setup-flutter.sh path
           sed -i 's|setup-flutter.sh -C|/var/lib/flutter/bin/setup-flutter.sh -C|g' com.hassaneltantawy.hisnelmoslem.yml
 
-          # Patch flutter-sdk-*.json to fix setup-flutter.sh and add package_config.json
+          # Patch flutter-sdk-*.json to replace git source with archive source (fixes offline build)
           cat <<EOF > fix_flutter_sdk.py
           import json
           import glob
@@ -104,33 +110,48 @@ jobs:
               
           filename = files[0]
           print(f"Patching {filename}...")
+          
+          # Read calculated SHA256
+          try:
+              with open('flutter_sha256.txt', 'r') as f:
+                  sha256 = f.read().strip()
+          except FileNotFoundError:
+               # Fallback if file not found (shouldn't happen in CI)
+               print("SHA256 file not found!")
+               exit(1)
+              
           with open(filename, 'r') as f:
               data = json.load(f)
           
-          # Add package_config.json source
-          new_source = {
-              "type": "file",
-              "path": "package_config.json",
-              "dest": "flutter/packages/flutter_tools/.dart_tool"
+          # New archive source (Full SDK with pre-built tool)
+          archive_source = {
+              "type": "archive",
+              "url": "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.5-stable.tar.xz",
+              "sha256": sha256,
+              "dest": "."
           }
           
-          # Avoid duplicates just in case
-          sources = data.get('sources', [])
-          if not any(s.get('path') == 'package_config.json' for s in sources):
-             sources.append(new_source)
-             print("Added package_config.json source")
+          # Custom setup script source
+          script_source = {
+              "type": "script",
+              "dest": "flutter/bin",
+              "dest-filename": "setup-flutter.sh",
+              "commands": [
+                  "/var/lib/flutter/bin/flutter pub get --offline $@"
+              ]
+          }
           
-          # Fix setup-flutter.sh commands
-          for source in sources:
-              if source.get('dest-filename') == 'setup-flutter.sh':
-                  source['commands'] = [
-                      '/var/lib/flutter/bin/flutter pub get --offline $@'
-                  ]
-                  print("Updated setup-flutter.sh commands")
+          # Replace sources with just the archive and the script
+          data['sources'] = [archive_source, script_source]
+          
+          # Update build commands to just install (archive contains everything)
+          data['build-commands'] = [
+              "mkdir -p /var/lib && cp -r flutter /var/lib"
+          ]
           
           with open(filename, 'w') as f:
               json.dump(data, f, indent=4)
-          print(f"Successfully patched {filename}")
+          print(f"Successfully patched {filename} with archive source")
           EOF
           python3 fix_flutter_sdk.py
 

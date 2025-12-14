@@ -5,18 +5,14 @@ on:
     branches:
       - main
       - master
-    paths-ignore:
-      - "pubspec.yaml"
-      - "pubspec.lock"
-      - "flatpak-flutter.yml"
+    paths:
+      - "com.hassaneltantawy.hisnelmoslem.yml"
   pull_request:
     branches:
       - main
       - master
-    paths-ignore:
-      - "pubspec.yaml"
-      - "pubspec.lock"
-      - "flatpak-flutter.yml"
+    paths:
+      - "com.hassaneltantawy.hisnelmoslem.yml"
   workflow_dispatch:
 
 jobs:

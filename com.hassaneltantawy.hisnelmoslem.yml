@@ -19,7 +19,7 @@ modules:
     subdir: hisnelmoslem
     buildsystem: simple
     build-commands:
-      - setup-flutter.sh -C hisnelmoslem
+      - /var/lib/flutter/bin/setup-flutter.sh -C hisnelmoslem
       - flutter config --enable-linux-desktop --no-analytics
       - sed -i '/untranslated-messages-file/d' l10n.yaml
       - flutter pub get

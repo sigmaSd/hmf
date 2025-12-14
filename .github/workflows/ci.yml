@@ -178,7 +178,7 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "chore: Update Flatpak manifest"
-            git push origin HEAD:${{ github.ref_name }}
+            git push origin HEAD:${{ github.head_ref || github.ref_name }}
           fi
 
       - name: Upload manifest artifacts

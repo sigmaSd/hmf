@@ -92,7 +92,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
           # Add all potential generated files
-          git add com.hassaneltantawy.hisnelmoslem.yml pubspec-sources.json flutter-sdk-*.json package_config.json flutter-shared.sh.patch cargo-sources.json || true
+          git add com.hassaneltantawy.hisnelmoslem.yml pubspec-sources.json flutter-sdk-*.json package_config.json flutter-shared.sh.patch || true
           
           # Check if there are changes to commit
           if git diff --staged --quiet; then

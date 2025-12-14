@@ -54,4 +54,4 @@ modules:
       - type: file
         path: com.hassaneltantawy.hisnelmoslem.metainfo.xml
 
-# Trigger manifest update
+# Trigger manifest update v2

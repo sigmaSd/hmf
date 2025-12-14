@@ -91,7 +91,7 @@ jobs:
           # Patch setup-flutter.sh path
           sed -i 's|setup-flutter.sh -C|/var/lib/flutter/bin/setup-flutter.sh -C|g' com.hassaneltantawy.hisnelmoslem.yml
 
-          # Patch flutter-sdk-*.json to fix setup-flutter.sh (remove broken mv, fix path)
+          # Patch flutter-sdk-*.json to fix setup-flutter.sh and add package_config.json
           cat <<EOF > fix_flutter_sdk.py
           import json
           import glob
@@ -107,8 +107,20 @@ jobs:
           with open(filename, 'r') as f:
               data = json.load(f)
           
-          # Fix setup-flutter.sh commands
+          # Add package_config.json source
+          new_source = {
+              "type": "file",
+              "path": "package_config.json",
+              "dest": "flutter/packages/flutter_tools/.dart_tool"
+          }
+          
+          # Avoid duplicates just in case
           sources = data.get('sources', [])
+          if not any(s.get('path') == 'package_config.json' for s in sources):
+             sources.append(new_source)
+             print("Added package_config.json source")
+          
+          # Fix setup-flutter.sh commands
           for source in sources:
               if source.get('dest-filename') == 'setup-flutter.sh':
                   source['commands'] = [

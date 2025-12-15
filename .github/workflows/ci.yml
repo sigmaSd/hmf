@@ -1,0 +1,240 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check-deps:
+    runs-on: ubuntu-latest
+    outputs:
+      should_update: ${{ steps.filter.outputs.deps }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            deps:
+              - 'pubspec.yaml'
+              - 'pubspec.lock'
+              - 'flatpak-flutter.yml'
+
+  update-manifest:
+    needs: check-deps
+    if: needs.check-deps.outputs.should_update == 'true'
+    name: Update Manifest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install flatpak-flutter dependencies
+        run: |
+          pip install packaging pyyaml toml
+
+      - name: Clone flatpak-flutter
+        run: |
+          git clone https://github.com/TheAppgineer/flatpak-flutter.git
+          cd flatpak-flutter
+          echo "flatpak-flutter version:"
+          python3 flatpak-flutter.py --version
+
+      - name: Get Flutter SHA256
+        run: |
+          echo "Calculating SHA256 for Flutter 3.35.5..."
+          curl -sL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.5-stable.tar.xz | sha256sum | cut -d' ' -f1 > flutter_sha256.txt
+          echo "SHA256: $(cat flutter_sha256.txt)"
+
+      - name: Run flatpak-flutter preprocessor
+        run: |
+          cd flatpak-flutter
+
+          # Patch flatpak-flutter.py to fix missing l10n file issue by modifying l10n.yaml
+          cat <<EOF > patch_script.py
+          import os
+          from pathlib import Path
+
+          file_path = 'flatpak-flutter.py'
+          with open(file_path, 'r') as f:
+              lines = f.readlines()
+
+          with open(file_path, 'w') as f:
+              for line in lines:
+                  f.write(line)
+                  if 'full_pubspec_path =' in line:
+                      indent = line[:line.find('full_pubspec_path')]
+                      f.write(indent + "print(f'DEBUG: Patching l10n.yaml in {full_pubspec_path}')\n")
+                      f.write(indent + "try:\n")
+                      f.write(indent + "    l10n_yaml = Path(full_pubspec_path) / 'l10n.yaml'\n")
+                      f.write(indent + "    if l10n_yaml.exists():\n")
+                      f.write(indent + "        with open(l10n_yaml, 'r') as yf: lines_y = yf.readlines()\n")
+                      f.write(indent + "        with open(l10n_yaml, 'w') as yf:\n")
+                      f.write(indent + "            for ly in lines_y:\n")
+                      f.write(indent + "                if 'untranslated-messages-file' not in ly:\n")
+                      f.write(indent + "                    yf.write(ly)\n")
+                      f.write(indent + "        print('DEBUG: Removed untranslated-messages-file from l10n.yaml')\n")
+                      f.write(indent + "    # Ensure output dir exists anyway\n")
+                      f.write(indent + "    l10n_dir = Path(full_pubspec_path) / 'lib' / 'generated' / 'lang'\n")
+                      f.write(indent + "    l10n_dir.mkdir(parents=True, exist_ok=True)\n")
+                      f.write(indent + "except Exception as e:\n")
+                      f.write(indent + "    print(f'DEBUG: Failed to patch l10n.yaml: {e}')\n")
+          EOF
+          python3 patch_script.py
+
+          python3 flatpak-flutter.py ../flatpak-flutter.yml --app-pubspec hisnelmoslem
+
+          # Patch setup-flutter.sh path
+          sed -i 's|setup-flutter.sh -C|/app/flutter/bin/setup-flutter.sh -C|g' com.hassaneltantawy.hisnelmoslem.yml
+
+          # Patch flutter-sdk-*.json to replace git source with archive source (fixes offline build)
+          cat <<EOF > fix_flutter_sdk.py
+          import json
+          import glob
+          import os
+          
+          files = glob.glob('flutter-sdk-*.json')
+          if not files:
+              print("No flutter-sdk json found")
+              exit(1)
+              
+          filename = files[0]
+          print(f"Patching {filename}...")
+          
+          # Read calculated SHA256
+          try:
+              with open('../flutter_sha256.txt', 'r') as f:
+                  sha256 = f.read().strip()
+          except FileNotFoundError:
+               # Fallback if file not found (shouldn't happen in CI)
+               print("SHA256 file not found!")
+               exit(1)
+              
+          with open(filename, 'r') as f:
+              data = json.load(f)
+          
+          # New archive source (Full SDK with pre-built tool)
+          archive_source = {
+              "type": "archive",
+              "url": "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.5-stable.tar.xz",
+              "sha256": sha256,
+              "dest": "."
+          }
+          
+          # Custom setup script source
+          script_source = {
+              "type": "script",
+              "dest": "flutter/bin",
+              "dest-filename": "setup-flutter.sh",
+              "commands": [
+                  "/app/flutter/bin/flutter pub get --offline $@"
+              ]
+          }
+          
+          # Replace sources with just the archive and the script
+          data['sources'] = [archive_source, script_source]
+          
+          # Update build commands to just install (archive contains everything)
+          data['build-commands'] = [
+              "cp -r flutter /app"
+          ]
+          
+          with open(filename, 'w') as f:
+              json.dump(data, f, indent=4)
+          print(f"Successfully patched {filename} with archive source")
+          EOF
+          python3 fix_flutter_sdk.py
+
+          # Move generated manifest and dependencies to root
+          if [ -f "com.hassaneltantawy.hisnelmoslem.yml" ]; then
+            mv com.hassaneltantawy.hisnelmoslem.yml ..
+            mv pubspec-sources.json .. 2>/dev/null || true
+            mv flutter-sdk-*.json .. 2>/dev/null || true
+            mv package_config.json .. 2>/dev/null || true
+            mv flutter-shared.sh.patch .. 2>/dev/null || true
+            mv cargo-sources.json .. 2>/dev/null || true
+          fi
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add all potential generated files
+          git add com.hassaneltantawy.hisnelmoslem.yml pubspec-sources.json flutter-sdk-*.json package_config.json flutter-shared.sh.patch || true
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: Update Flatpak manifest"
+            git pull origin ${{ github.head_ref || github.ref_name }} --rebase
+            git push origin HEAD:${{ github.head_ref || github.ref_name }}
+          fi
+
+      - name: Upload manifest artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-manifest-files
+          path: |
+            com.hassaneltantawy.hisnelmoslem.yml
+            pubspec-sources.json
+            flutter-sdk-*.json
+            package_config.json
+            flutter-shared.sh.patch
+
+  build-flatpak:
+    needs: [check-deps, update-manifest]
+    if: |
+      always() && 
+      (needs.update-manifest.result == 'success' || needs.check-deps.outputs.should_update == 'false') &&
+      (needs.update-manifest.result != 'failure' && needs.update-manifest.result != 'cancelled')
+    
+    name: Build Flatpak Package
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:freedesktop-24.08
+      options: --privileged
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download updated manifest
+        if: needs.update-manifest.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: flatpak-manifest-files
+          path: .
+
+      - name: Build Flatpak
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: hisnelmoslem.flatpak
+          manifest-path: com.hassaneltantawy.hisnelmoslem.yml
+          cache-key: flatpak-builder-${{ github.sha }}
+
+      - name: Upload Flatpak artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hisnelmoslem-flatpak
+          path: hisnelmoslem.flatpak
+          retention-days: 30
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: .flatpak-builder/build/**/*.log
+          if-no-files-found: ignore

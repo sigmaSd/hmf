@@ -1,9 +1,10 @@
+# Generated from ../flatpak-flutter.yml, do not edit
+# Visit the flatpak-flutter project at https://github.com/TheAppgineer/flatpak-flutter
 app-id: com.hassaneltantawy.hisnelmoslem
 runtime: org.freedesktop.Platform
-runtime-version: "24.08"
+runtime-version: '24.08'
 sdk: org.freedesktop.Sdk
 command: hisnelmoslem
-
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
@@ -13,45 +14,29 @@ finish-args:
   - --share=network
   - --filesystem=xdg-documents
   - --filesystem=xdg-download
-
 modules:
   - name: hisnelmoslem
     subdir: hisnelmoslem
     buildsystem: simple
     build-commands:
-      # Configure and build Flutter app
+      - /var/lib/flutter/bin/setup-flutter.sh -C hisnelmoslem
       - flutter config --enable-linux-desktop --no-analytics
       - sed -i '/untranslated-messages-file/d' l10n.yaml
       - flutter pub get
       - flutter build linux --release --no-pub
-
-      # Install the application
       - mkdir -p /app/bin
       - cp -r build/linux/x64/release/bundle/* /app/bin/
-
-      # Install desktop file
       - install -Dm644 ../com.hassaneltantawy.hisnelmoslem.desktop /app/share/applications/com.hassaneltantawy.hisnelmoslem.desktop
-
-      # Install AppData file
       - install -Dm644 ../com.hassaneltantawy.hisnelmoslem.metainfo.xml /app/share/metainfo/com.hassaneltantawy.hisnelmoslem.metainfo.xml
-
-      # Install icons
       - install -Dm644 assets/images/app_icon.png /app/share/icons/hicolor/512x512/apps/com.hassaneltantawy.hisnelmoslem.png
-
     sources:
+      - pubspec-sources.json
       - type: git
         url: https://github.com/muslimpack/HisnElmoslem_App.git
         tag: v3.0.01
-
-      - type: git
-        url: https://github.com/flutter/flutter.git
-        tag: 3.35.5
-        dest: flutter
-
       - type: file
         path: com.hassaneltantawy.hisnelmoslem.desktop
-
       - type: file
         path: com.hassaneltantawy.hisnelmoslem.metainfo.xml
-
-# Trigger fix
+    modules:
+      - flutter-sdk-3.35.5.json

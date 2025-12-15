@@ -1,0 +1,23 @@
+{
+    "name": "flutter",
+    "buildsystem": "simple",
+    "build-commands": [
+        "mkdir -p /var/lib && cp -r flutter /var/lib"
+    ],
+    "sources": [
+        {
+            "type": "archive",
+            "url": "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.5-stable.tar.xz",
+            "sha256": "8eead69e5d84131fcfbb2cfd44164c00e9a04df725f24672ea234c6bd136353d",
+            "dest": "."
+        },
+        {
+            "type": "script",
+            "dest": "flutter/bin",
+            "dest-filename": "setup-flutter.sh",
+            "commands": [
+                "/var/lib/flutter/bin/flutter pub get --offline "
+            ]
+        }
+    ]
+}

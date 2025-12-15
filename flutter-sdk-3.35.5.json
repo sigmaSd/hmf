@@ -2,7 +2,7 @@
     "name": "flutter",
     "buildsystem": "simple",
     "build-commands": [
-        "mkdir -p /var/lib && cp -r flutter /var/lib"
+        "cp -r flutter /app"
     ],
     "sources": [
         {
@@ -16,7 +16,7 @@
             "dest": "flutter/bin",
             "dest-filename": "setup-flutter.sh",
             "commands": [
-                "/var/lib/flutter/bin/flutter pub get --offline "
+                "/app/flutter/bin/flutter pub get --offline "
             ]
         }
     ]

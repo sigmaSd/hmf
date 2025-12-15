@@ -95,7 +95,7 @@ jobs:
           python3 flatpak-flutter.py ../flatpak-flutter.yml --app-pubspec hisnelmoslem
 
           # Patch setup-flutter.sh path
-          sed -i 's|setup-flutter.sh -C|/var/lib/flutter/bin/setup-flutter.sh -C|g' com.hassaneltantawy.hisnelmoslem.yml
+          sed -i 's|setup-flutter.sh -C|/app/flutter/bin/setup-flutter.sh -C|g' com.hassaneltantawy.hisnelmoslem.yml
 
           # Patch flutter-sdk-*.json to replace git source with archive source (fixes offline build)
           cat <<EOF > fix_flutter_sdk.py
@@ -137,7 +137,7 @@ jobs:
               "dest": "flutter/bin",
               "dest-filename": "setup-flutter.sh",
               "commands": [
-                  "/var/lib/flutter/bin/flutter pub get --offline $@"
+                  "/app/flutter/bin/flutter pub get --offline $@"
               ]
           }
           
@@ -146,7 +146,7 @@ jobs:
           
           # Update build commands to just install (archive contains everything)
           data['build-commands'] = [
-              "mkdir -p /var/lib && cp -r flutter /var/lib"
+              "cp -r flutter /app"
           ]
           
           with open(filename, 'w') as f:
